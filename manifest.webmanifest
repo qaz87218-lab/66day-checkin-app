@@ -1,0 +1,29 @@
+{
+  "name": "66 DAYS — 習慣打卡",
+  "short_name": "66 DAYS",
+  "description": "把升等搬到現實：66 天習慣打卡挑戰",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f0d0c",
+  "theme_color": "#c7331f",
+  "categories": ["lifestyle", "productivity", "health"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

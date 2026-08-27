@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#c7331f" />
+  <meta name="description" content="把升等搬到現實：66 天習慣打卡挑戰" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="66 DAYS" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>66 DAYS</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="sun sun-one"></div>
+      <div class="sun sun-two"></div>
+      <div class="hero-topline">
+        <div>
+          <p class="eyebrow">REAL LIFE LEVEL UP</p>
+          <h1>66 DAYS</h1>
+        </div>
+        <button class="icon-button" id="settingsButton" aria-label="設定">⚙︎</button>
+      </div>
+      <p class="hero-copy">把升等搬到現實。</p>
+
+      <section class="progress-card" aria-label="66天挑戰進度">
+        <div class="progress-ring" id="progressRing">
+          <div class="progress-ring-inner">
+            <strong id="completedDays">0</strong>
+            <span>/ 66</span>
+          </div>
+        </div>
+        <div class="progress-copy">
+          <span class="status-pill" id="challengeStatus">挑戰開始</span>
+          <h2 id="progressHeadline">第 1 天</h2>
+          <p id="nextGiftText">再完成 5 天解鎖第一個禮物</p>
+          <div class="mini-stats">
+            <div><strong id="streakCount">0</strong><span>連續天數</span></div>
+            <div><strong id="perfectRate">0%</strong><span>完成率</span></div>
+          </div>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="page active" id="todayPage" data-page="today">
+        <div class="section-heading">
+          <div>
+            <p class="date-label" id="todayDate"></p>
+            <h2>今天的打卡</h2>
+          </div>
+          <span class="count-badge" id="todayCount">0 / 11</span>
+        </div>
+
+        <div class="daily-message" id="dailyMessage">
+          <span>今天只需要把今天做好。</span>
+        </div>
+
+        <div class="habit-list" id="habitList"></div>
+
+        <div class="note-card">
+          <label for="dailyNote">今天的一句話 <span>選填</span></label>
+          <textarea id="dailyNote" rows="3" maxlength="240" placeholder="記下今天的感受、值得感激的事，或想留給明天的話…"></textarea>
+          <div class="note-footer"><span id="noteSaved">自動儲存</span><span id="noteCounter">0 / 240</span></div>
+        </div>
+
+        <button class="complete-button" id="completeDayButton" disabled>
+          <span id="completeButtonText">完成 11 項即可打卡</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <section class="page" id="historyPage" data-page="history">
+        <div class="section-heading">
+          <div>
+            <p class="date-label">YOUR JOURNEY</p>
+            <h2>66 天紀錄</h2>
+          </div>
+          <span class="count-badge" id="historyDoneBadge">0 天</span>
+        </div>
+        <p class="section-description">成功打卡會變成實心圓。沒有完成的日子不會抹掉你的累積成果，連續天數則會重新計算。</p>
+        <div class="calendar-card">
+          <div class="calendar-grid" id="challengeCalendar"></div>
+          <div class="calendar-legend">
+            <span><i class="legend-dot done"></i>完成</span>
+            <span><i class="legend-dot today"></i>今天</span>
+            <span><i class="legend-dot missed"></i>未完成</span>
+            <span><i class="legend-dot future"></i>未來</span>
+          </div>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <section class="page" id="rewardsPage" data-page="rewards">
+        <div class="section-heading">
+          <div>
+            <p class="date-label">LEVEL UP REWARDS</p>
+            <h2>禮物箱</h2>
+          </div>
+          <span class="count-badge" id="rewardCountBadge">0 / 14</span>
+        </div>
+        <p class="section-description">每累積完成 5 天解鎖一份小禮物；第 66 天另有最終徽章。禮物是給自己的獎勵建議，不會要求花錢。</p>
+        <div class="reward-grid" id="rewardGrid"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="主要導覽">
+      <button class="nav-item active" data-target="today" aria-current="page"><span>✓</span><small>今天</small></button>
+      <button class="nav-item" data-target="history"><span>▦</span><small>紀錄</small></button>
+      <button class="nav-item" data-target="rewards"><span>✦</span><small>禮物</small></button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop" id="rewardModal" hidden>
+    <div class="modal reward-modal" role="dialog" aria-modal="true" aria-labelledby="rewardModalTitle">
+      <button class="modal-close" data-close-modal aria-label="關閉">×</button>
+      <div class="gift-burst" id="giftBurst">🎁</div>
+      <p class="eyebrow">MILESTONE UNLOCKED</p>
+      <h2 id="rewardModalTitle">禮物解鎖</h2>
+      <p class="reward-modal-copy" id="rewardModalCopy"></p>
+      <button class="primary-modal-button" data-close-modal>收下禮物</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" hidden>
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+      <button class="modal-close" data-close-settings aria-label="關閉">×</button>
+      <p class="eyebrow">SETTINGS</p>
+      <h2 id="settingsModalTitle">設定與備份</h2>
+      <div class="setting-row">
+        <div><strong>挑戰開始日</strong><small>第 1 天從這一天開始</small></div>
+        <input type="date" id="startDateInput" />
+      </div>
+      <div class="settings-actions">
+        <button id="exportButton">匯出備份</button>
+        <label class="file-button">匯入備份<input type="file" id="importInput" accept="application/json" /></label>
+      </div>
+      <p class="settings-note">目前資料儲存在這台裝置的瀏覽器。若清除 Safari 網站資料，紀錄可能會消失，建議偶爾匯出備份。</p>
+      <button class="danger-button" id="resetButton">清除全部紀錄</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
