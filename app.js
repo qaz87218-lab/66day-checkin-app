@@ -1,38 +1,45 @@
 (() => {
   'use strict';
 
+  // Keep the original storage key so existing users are migrated in place.
   const STORAGE_KEY = '66days-checkin-v1';
-  const GOAL_DAYS = 66;
+  const APP_VERSION = 2;
+  const CUSTOM_DAILY_EXP_CAP = 200;
 
-  const HABITS = [
-    { id: 'run', icon: '🏃', title: '每天跑步', detail: '有出去跑就算完成' },
-    { id: 'pushups', icon: '💪', title: '每天伏地挺身', detail: '完成今天為自己設定的組數' },
-    { id: 'read', icon: '📖', title: '每天讀 10 頁', detail: '任何你想讀的書都可以' },
-    { id: 'water', icon: '💧', title: '喝 3.5 公升水', detail: '今天累積 3.5 L' },
-    { id: 'meditate', icon: '🧘', title: '冥想 20 分鐘', detail: '一次完成或分段都可以' },
-    { id: 'wake', icon: '🌅', title: '7 點前起床', detail: '07:00 前離開床' },
-    { id: 'cold', icon: '🚿', title: '冷水澡一次', detail: '完成一次冷水沖洗' },
-    { id: 'social', icon: '📵', title: '不用社群媒體', detail: '今天不滑社群動態' },
-    { id: 'exercise', icon: '🏋️', title: '運動 1 小時', detail: '累積運動滿 60 分鐘' },
-    { id: 'journal', icon: '✍️', title: '每天寫日記', detail: '長短不限，留下紀錄即可' },
-    { id: 'gratitude', icon: '✨', title: '心存感激', detail: '寫下或想起至少一件感激的事' },
+  const DEFAULT_HABITS = [
+    { id: 'run', icon: '🏃', title: '每天跑步', detail: '有出去跑就算完成', difficulty: 3, exp: 30 },
+    { id: 'pushups', icon: '💪', title: '每天伏地挺身', detail: '完成今天為自己設定的組數', difficulty: 2, exp: 20 },
+    { id: 'read', icon: '📖', title: '每天讀 10 頁', detail: '任何你想讀的書都可以', difficulty: 2, exp: 20 },
+    { id: 'water', icon: '💧', title: '喝 3.5 公升水', detail: '今天累積 3.5 L', difficulty: 1, exp: 10 },
+    { id: 'meditate', icon: '🧘', title: '冥想 20 分鐘', detail: '一次完成或分段都可以', difficulty: 2, exp: 20 },
+    { id: 'wake', icon: '🌅', title: '7 點前起床', detail: '07:00 前離開床', difficulty: 2, exp: 20 },
+    { id: 'cold', icon: '🚿', title: '冷水澡一次', detail: '完成一次冷水沖洗', difficulty: 2, exp: 20 },
+    { id: 'social', icon: '📵', title: '不用社群媒體', detail: '今天不滑社群動態', difficulty: 3, exp: 30 },
+    { id: 'exercise', icon: '🏋️', title: '運動 1 小時', detail: '累積運動滿 60 分鐘', difficulty: 4, exp: 40 },
+    { id: 'journal', icon: '✍️', title: '每天寫日記', detail: '長短不限，留下紀錄即可', difficulty: 2, exp: 20 },
+    { id: 'gratitude', icon: '✨', title: '心存感激', detail: '寫下或想起至少一件感激的事', difficulty: 1, exp: 10 },
   ];
 
-  const REWARDS = [
-    { day: 5, emoji: '☕', title: '小小補給', copy: '給自己一杯最喜歡的飲料，慶祝你真的開始了。' },
-    { day: 10, emoji: '🍰', title: '甜點時間', copy: '挑一份你喜歡的小甜點，慢慢吃完，不用急。' },
-    { day: 15, emoji: '🎬', title: '電影之夜', copy: '找一部一直想看的電影，留一個晚上給自己。' },
-    { day: 20, emoji: '📚', title: '一本新書', copy: '挑一本真的想看的書，當作第 20 天的紀念。' },
-    { day: 25, emoji: '🍜', title: '想吃的那一餐', copy: '去吃一頓你最近一直想吃的東西。' },
-    { day: 30, emoji: '🎧', title: '30 天徽章', copy: '一個月了。送自己一個不昂貴、但會常用的小東西。' },
-    { day: 35, emoji: '🌿', title: '半日放鬆', copy: '安排半天散步、咖啡或安靜獨處，讓身體恢復。' },
-    { day: 40, emoji: '🎨', title: '興趣補給', copy: '買一樣和興趣有關的小用品，繼續把生活過得有感覺。' },
-    { day: 45, emoji: '🕹️', title: '無罪惡感休息', copy: '給自己兩小時完全自由的休息時間。' },
-    { day: 50, emoji: '🍽️', title: '50 天紀念餐', copy: '找一家喜歡的店，認真慶祝這 50 天。' },
-    { day: 55, emoji: '🧸', title: '一件小物', copy: '挑一件你會看到就記得這段挑戰的小物。' },
-    { day: 60, emoji: '🌟', title: '大里程碑', copy: '只剩最後 6 天。給自己一個比平常稍微特別的獎勵。' },
-    { day: 65, emoji: '🎁', title: '最後一個禮物箱', copy: '明天就是第 66 天。今晚只需要好好休息。' },
-    { day: 66, emoji: '👑', title: '66 DAYS 完成', copy: '你完成了整個挑戰。這不是連續按了 66 次按鈕，而是 66 次把承諾做完。' },
+  const STREAK_BONUSES = new Map([
+    [7, 30],
+    [30, 100],
+    [66, 200],
+    [100, 300],
+    [365, 1000],
+  ]);
+
+  const TITLES = [
+    { level: 1, icon: '◈', title: '無名之人', copy: '一切尚未被命名。從今天開始，用行動刻下第一道痕跡。' },
+    { level: 10, icon: '✦', title: '誓約者', copy: '你已經不再只靠一時的衝動，而是開始履行對自己的誓約。' },
+    { level: 20, icon: '⚔️', title: '戒律行者', copy: '規則不再是束縛，而是你選擇前進的道路。' },
+    { level: 30, icon: '⛓️', title: '鋼鐵意志', copy: '惰性開始失去支配你的力量。你的意志正在成形。' },
+    { level: 40, icon: '🔥', title: '破惰者', copy: '你已跨過一次又一次想放棄的瞬間，斬斷舊有慣性。' },
+    { level: 50, icon: '🛡️', title: '自律騎士', copy: '自律已不是任務，而是你的戰鬥方式。' },
+    { level: 60, icon: '⚜️', title: '戒律騎士長', copy: '你不只守住承諾，也開始能駕馭自己的節奏。' },
+    { level: 70, icon: '☄️', title: '命運執行者', copy: '不再等待狀態與時機。你開始主動執行自己選擇的命運。' },
+    { level: 80, icon: '♛', title: '不屈之王', copy: '中斷不再等於結束。你學會一次次重新站回自己的王座。' },
+    { level: 90, icon: '✧', title: '超越者', copy: '你的對手已經不是昨天的懶惰，而是今天能否超越昨天的自己。' },
+    { level: 100, icon: '👑', title: '自我支配者', copy: '第一階段完成。你不再被習慣支配，而開始支配自己的習慣。' },
   ];
 
   const $ = (selector) => document.querySelector(selector);
@@ -68,206 +75,338 @@
     }).format(parseLocalDate(key));
   }
 
-  function emptyToday() {
-    return Object.fromEntries(HABITS.map(h => [h.id, false]));
+  function escapeHtml(value = '') {
+    return String(value).replace(/[&<>'"]/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
   }
 
   function defaultState() {
     return {
-      version: 1,
+      version: APP_VERSION,
       startDate: localDateKey(),
       days: {},
-      seenRewards: [],
+      customHabits: [],
     };
+  }
+
+  function migrateState(rawState) {
+    const base = defaultState();
+    if (!rawState || typeof rawState !== 'object') return base;
+
+    const migrated = {
+      ...base,
+      ...rawState,
+      version: APP_VERSION,
+      days: rawState.days && typeof rawState.days === 'object' ? rawState.days : {},
+      customHabits: Array.isArray(rawState.customHabits) ? rawState.customHabits : [],
+    };
+
+    Object.entries(migrated.days).forEach(([key, day]) => {
+      if (!day || typeof day !== 'object') migrated.days[key] = { habits: {}, note: '' };
+      migrated.days[key].habits = migrated.days[key].habits && typeof migrated.days[key].habits === 'object'
+        ? migrated.days[key].habits
+        : {};
+      migrated.days[key].note = migrated.days[key].note || '';
+      // Old v1 fields such as `completed` are intentionally left in place for backup compatibility,
+      // but v2 no longer uses them to decide whether a day counts.
+    });
+
+    migrated.customHabits = migrated.customHabits.map((habit) => ({
+      ...habit,
+      difficulty: Math.min(5, Math.max(1, Number(habit.difficulty) || 2)),
+      exp: Number(habit.exp) || (Math.min(5, Math.max(1, Number(habit.difficulty) || 2)) * 10),
+      createdAt: habit.createdAt || migrated.startDate,
+      active: habit.active !== false,
+      archivedAt: habit.archivedAt || null,
+      custom: true,
+    }));
+
+    return migrated;
   }
 
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
-      const parsed = JSON.parse(raw);
-      return {
-        ...defaultState(),
-        ...parsed,
-        days: parsed.days || {},
-        seenRewards: Array.isArray(parsed.seenRewards) ? parsed.seenRewards : [],
-      };
+      return raw ? migrateState(JSON.parse(raw)) : defaultState();
     } catch {
       return defaultState();
     }
   }
 
   let state = loadState();
-  let activePage = 'today';
   let toastTimer;
-
-  function ensureDay(key = localDateKey()) {
-    if (!state.days[key]) {
-      state.days[key] = { habits: emptyToday(), note: '', completed: false, completedAt: null };
-    }
-    const existing = state.days[key];
-    existing.habits = { ...emptyToday(), ...(existing.habits || {}) };
-    existing.note = existing.note || '';
-    return existing;
-  }
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
-  function completedDateKeys() {
-    return Object.entries(state.days)
-      .filter(([, value]) => value.completed)
-      .map(([key]) => key)
+  function getAllHabits(includeArchived = true) {
+    const defaults = DEFAULT_HABITS.map((habit) => ({
+      ...habit,
+      createdAt: state.startDate,
+      archivedAt: null,
+      active: true,
+      custom: false,
+    }));
+    const custom = includeArchived ? state.customHabits : state.customHabits.filter((habit) => habit.active !== false);
+    return [...defaults, ...custom];
+  }
+
+  function getActiveHabits() {
+    return getAllHabits(false);
+  }
+
+  function getHabitMap() {
+    return new Map(getAllHabits(true).map((habit) => [habit.id, habit]));
+  }
+
+  function habitAvailableOnDate(habit, key) {
+    if (!habit) return false;
+    if (habit.createdAt && key < habit.createdAt) return false;
+    if (habit.archivedAt && key > habit.archivedAt) return false;
+    return true;
+  }
+
+  function ensureDay(key = localDateKey()) {
+    if (!state.days[key]) state.days[key] = { habits: {}, note: '' };
+    const day = state.days[key];
+    day.habits = day.habits && typeof day.habits === 'object' ? day.habits : {};
+    getActiveHabits().forEach((habit) => {
+      if (!(habit.id in day.habits)) day.habits[habit.id] = false;
+    });
+    day.note = day.note || '';
+    return day;
+  }
+
+  function completedKeysForHabit(habitId) {
+    const habit = getHabitMap().get(habitId);
+    if (!habit) return [];
+    return Object.keys(state.days)
+      .filter((key) => key <= localDateKey() && habitAvailableOnDate(habit, key) && !!state.days[key]?.habits?.[habitId])
       .sort();
   }
 
-  function completedDaysCount() {
-    return completedDateKeys().length;
-  }
+  function getHabitStats(habitId) {
+    const keys = completedKeysForHabit(habitId);
+    let best = 0;
+    let segment = 0;
+    let previous = null;
 
-  function getStreak() {
-    const today = localDateKey();
-    let cursor = today;
-    if (!state.days[cursor]?.completed) cursor = addDays(cursor, -1);
-    let streak = 0;
-    while (state.days[cursor]?.completed) {
-      streak += 1;
-      cursor = addDays(cursor, -1);
+    keys.forEach((key) => {
+      segment = previous && dayDiff(previous, key) === 1 ? segment + 1 : 1;
+      best = Math.max(best, segment);
+      previous = key;
+    });
+
+    let current = 0;
+    if (keys.length) {
+      const last = keys[keys.length - 1];
+      const today = localDateKey();
+      if (last === today || last === addDays(today, -1)) {
+        current = 1;
+        for (let i = keys.length - 2; i >= 0; i -= 1) {
+          if (dayDiff(keys[i], keys[i + 1]) === 1) current += 1;
+          else break;
+        }
+      }
     }
-    return streak;
+
+    return { total: keys.length, current, best };
   }
 
-  function elapsedChallengeDays() {
-    return Math.max(1, Math.min(GOAL_DAYS, dayDiff(state.startDate, localDateKey()) + 1));
+  function buildXpLedger() {
+    const habitMap = getHabitMap();
+    const ledger = {};
+    const today = localDateKey();
+
+    Object.keys(state.days).filter((key) => key <= today).forEach((key) => {
+      const day = state.days[key];
+      let builtInBase = 0;
+      let customBase = 0;
+
+      Object.entries(day.habits || {}).forEach(([habitId, done]) => {
+        if (!done) return;
+        const habit = habitMap.get(habitId);
+        if (!habit || !habitAvailableOnDate(habit, key)) return;
+        if (habit.custom) customBase += habit.exp;
+        else builtInBase += habit.exp;
+      });
+
+      ledger[key] = builtInBase + Math.min(CUSTOM_DAILY_EXP_CAP, customBase);
+    });
+
+    habitMap.forEach((habit, habitId) => {
+      const keys = completedKeysForHabit(habitId);
+      let streak = 0;
+      let previous = null;
+      keys.forEach((key) => {
+        streak = previous && dayDiff(previous, key) === 1 ? streak + 1 : 1;
+        const bonus = STREAK_BONUSES.get(streak) || 0;
+        if (bonus) ledger[key] = (ledger[key] || 0) + bonus;
+        previous = key;
+      });
+    });
+
+    return ledger;
   }
 
-  function completionRate() {
-    const elapsed = Math.max(1, Math.min(GOAL_DAYS, dayDiff(state.startDate, localDateKey()) + 1));
-    const eligibleCompleted = completedDateKeys().filter(key => dayDiff(state.startDate, key) >= 0 && dayDiff(state.startDate, key) < GOAL_DAYS).length;
-    return Math.round((eligibleCompleted / elapsed) * 100);
+  function totalExp() {
+    return Object.values(buildXpLedger()).reduce((sum, value) => sum + value, 0);
   }
 
-  function currentHabitCount() {
-    const day = ensureDay();
-    return HABITS.filter(h => day.habits[h.id]).length;
+  function expNeededForLevel(level) {
+    return level >= 100 ? 2080 : 100 + (level - 1) * 20;
   }
 
-  function nextReward(total) {
-    return REWARDS.find(reward => reward.day > total) || null;
+  function levelFromExp(exp) {
+    let level = 1;
+    let remaining = Math.max(0, exp);
+    while (remaining >= expNeededForLevel(level)) {
+      remaining -= expNeededForLevel(level);
+      level += 1;
+    }
+    return {
+      level,
+      currentExp: remaining,
+      neededExp: expNeededForLevel(level),
+    };
+  }
+
+  function titleForLevel(level) {
+    return [...TITLES].reverse().find((entry) => level >= entry.level) || TITLES[0];
+  }
+
+  function disciplineDateKeys() {
+    const habitMap = getHabitMap();
+    return Object.keys(state.days)
+      .filter((key) => key <= localDateKey())
+      .filter((key) => Object.entries(state.days[key]?.habits || {}).some(([habitId, done]) => {
+        const habit = habitMap.get(habitId);
+        return !!done && habitAvailableOnDate(habit, key);
+      }))
+      .sort();
+  }
+
+  function dailyCompletedCount(key) {
+    const habitMap = getHabitMap();
+    return Object.entries(state.days[key]?.habits || {}).filter(([habitId, done]) => {
+      const habit = habitMap.get(habitId);
+      return !!done && habitAvailableOnDate(habit, key);
+    }).length;
+  }
+
+  function availableHabitCountOnDate(key) {
+    return getAllHabits(true).filter((habit) => habitAvailableOnDate(habit, key)).length;
   }
 
   function renderHeader() {
-    const total = completedDaysCount();
-    const progress = Math.min(100, total / GOAL_DAYS * 100);
-    $('#completedDays').textContent = total;
-    $('#streakCount').textContent = getStreak();
-    $('#perfectRate').textContent = `${completionRate()}%`;
-    $('#progressRing').style.setProperty('--progress', `${progress * 3.6}deg`);
+    const exp = totalExp();
+    const info = levelFromExp(exp);
+    const title = titleForLevel(info.level);
+    const progress = info.neededExp ? (info.currentExp / info.neededExp) * 100 : 0;
 
-    const calendarDay = dayDiff(state.startDate, localDateKey()) + 1;
-    if (total >= GOAL_DAYS) {
-      $('#challengeStatus').textContent = '挑戰完成';
-      $('#progressHeadline').textContent = '66 天達成';
-      $('#nextGiftText').textContent = '你已經把整個挑戰走完了。';
-    } else {
-      $('#challengeStatus').textContent = calendarDay <= 0 ? '尚未開始' : '挑戰進行中';
-      $('#progressHeadline').textContent = calendarDay > 0 ? `第 ${Math.min(calendarDay, GOAL_DAYS)} 天` : `還有 ${Math.abs(calendarDay) + 1} 天開始`;
-      const next = nextReward(total);
-      $('#nextGiftText').textContent = next ? `再完成 ${next.day - total} 天解鎖「${next.title}」` : '繼續保持。';
-    }
+    $('#levelNumber').textContent = info.level;
+    $('#currentTitle').textContent = title.title;
+    $('#progressHeadline').textContent = `距離 Lv.${info.level + 1}`;
+    $('#levelProgressText').textContent = `${info.currentExp.toLocaleString()} / ${info.neededExp.toLocaleString()} EXP`;
+    $('#disciplineDays').textContent = disciplineDateKeys().length.toLocaleString();
+    $('#totalExp').textContent = exp.toLocaleString();
+    $('#progressRing').style.setProperty('--progress', `${Math.min(100, progress) * 3.6}deg`);
+    $('#xpBarFill').style.width = `${Math.min(100, progress)}%`;
   }
 
   function renderToday() {
     const key = localDateKey();
     const day = ensureDay(key);
-    const count = currentHabitCount();
-    $('#todayDate').textContent = `${formatDate(key)} · ${day.completed ? '今天已完成' : '今天'}`;
-    $('#todayCount').textContent = `${count} / ${HABITS.length}`;
+    const habits = getActiveHabits();
+    const count = habits.filter((habit) => !!day.habits[habit.id]).length;
+    const ledger = buildXpLedger();
+
+    $('#todayDate').textContent = formatDate(key);
+    $('#todayCount').textContent = `${count} / ${habits.length}`;
+    $('#todayXp').textContent = `+${(ledger[key] || 0).toLocaleString()} EXP`;
 
     const messages = [
-      '今天只需要把今天做好。',
-      '不要等有動力，先完成下一個小項目。',
-      '你不是在追求完美，你是在建立可重複的生活。',
-      '把最難的一項先做掉，後面會變輕。',
-      '66 天很長，但今天只有一天。',
+      '每完成一項，就算今天向前一步。',
+      '不是全部做完才算數；每一項完成都會留下紀錄。',
+      '連續很強，但中斷也不會抹掉你曾經累積的天數。',
+      '把最難的一項先斬掉，今天就會容易很多。',
+      '66 天不是終點，只是你會經過的一座里程碑。',
     ];
-    $('#dailyMessage').firstElementChild.textContent = day.completed ? '今天已經完成。可以安心休息。' : messages[(dayDiff(state.startDate, key) % messages.length + messages.length) % messages.length];
+    $('#dailyMessage').firstElementChild.textContent = messages[Math.abs(dayDiff(state.startDate, key)) % messages.length];
 
-    const list = $('#habitList');
-    list.innerHTML = HABITS.map(habit => {
+    $('#habitList').innerHTML = habits.map((habit) => {
       const checked = !!day.habits[habit.id];
+      const stats = getHabitStats(habit.id);
+      const stars = '★'.repeat(habit.difficulty);
       return `
-        <button class="habit-row ${checked ? 'done' : ''} ${day.completed ? 'locked' : ''}" data-habit="${habit.id}" ${day.completed ? 'aria-disabled="true"' : ''}>
-          <span class="habit-icon">${habit.icon}</span>
-          <span class="habit-copy"><strong>${habit.title}</strong><small>${habit.detail}</small></span>
+        <div class="habit-row ${checked ? 'done' : ''}" data-habit="${escapeHtml(habit.id)}" role="button" tabindex="0" aria-pressed="${checked}">
+          <span class="habit-icon">${escapeHtml(habit.icon)}</span>
+          <span class="habit-copy">
+            <span class="habit-title-line"><strong>${escapeHtml(habit.title)}</strong><em>+${habit.exp} EXP</em></span>
+            <small>${escapeHtml(habit.detail || `${stars} 難度`)}</small>
+            <span class="habit-stats"><b>累積 ${stats.total}</b><b>🔥 ${stats.current}</b><b>最佳 ${stats.best}</b></span>
+          </span>
+          ${habit.custom ? `<button class="habit-delete" type="button" data-delete-habit="${escapeHtml(habit.id)}" aria-label="刪除 ${escapeHtml(habit.title)}">×</button>` : ''}
           <span class="habit-check" aria-label="${checked ? '已完成' : '未完成'}">${checked ? '✓' : ''}</span>
-        </button>`;
+        </div>`;
     }).join('');
 
     const note = $('#dailyNote');
     note.value = day.note;
-    note.disabled = day.completed;
+    note.disabled = false;
     $('#noteCounter').textContent = `${day.note.length} / 240`;
-
-    const button = $('#completeDayButton');
-    if (day.completed) {
-      button.disabled = false;
-      button.classList.add('completed');
-      $('#completeButtonText').textContent = '今天已完成 · 點此重新編輯';
-    } else {
-      button.classList.remove('completed');
-      button.disabled = count !== HABITS.length;
-      $('#completeButtonText').textContent = count === HABITS.length ? '完成今天的打卡' : `還差 ${HABITS.length - count} 項`;
-    }
   }
 
   function renderHistory() {
     const today = localDateKey();
-    const total = completedDaysCount();
-    $('#historyDoneBadge').textContent = `${total} 天`;
+    const total = disciplineDateKeys().length;
+    const ledger = buildXpLedger();
+    $('#historyDoneBadge').textContent = `${total.toLocaleString()} 天`;
 
-    const calendar = $('#challengeCalendar');
-    const currentIndex = dayDiff(state.startDate, today);
-    calendar.innerHTML = Array.from({ length: GOAL_DAYS }, (_, index) => {
-      const key = addDays(state.startDate, index);
-      const isDone = !!state.days[key]?.completed;
+    const elapsed = Math.max(1, dayDiff(state.startDate, today) + 1);
+    const displayDays = Math.min(70, elapsed);
+    const rangeStart = addDays(today, -(displayDays - 1));
+
+    $('#challengeCalendar').innerHTML = Array.from({ length: displayDays }, (_, index) => {
+      const key = addDays(rangeStart, index);
+      const done = dailyCompletedCount(key) > 0;
       const isToday = key === today;
-      const isFuture = index > currentIndex;
-      const isMissed = index < currentIndex && !isDone;
-      return `<div class="day-dot ${isDone ? 'done' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''} ${isMissed ? 'missed' : ''}" title="第 ${index + 1} 天 · ${formatDate(key, false)}">${index + 1}</div>`;
+      return `<div class="day-dot ${done ? 'done' : 'missed'} ${isToday ? 'today' : ''}" title="${formatDate(key, false)} · ${dailyCompletedCount(key)} 項">${parseLocalDate(key).getDate()}</div>`;
     }).join('');
 
-    const relevant = Object.keys(state.days)
-      .filter(key => dayDiff(state.startDate, key) >= 0 && key <= today)
-      .sort((a,b) => b.localeCompare(a))
-      .slice(0, 14);
-
-    $('#historyList').innerHTML = relevant.length ? relevant.map(key => {
-      const day = state.days[key];
-      const score = HABITS.filter(h => day.habits?.[h.id]).length;
+    const recentDays = Math.min(14, elapsed);
+    const keys = Array.from({ length: recentDays }, (_, index) => addDays(today, -index));
+    $('#historyList').innerHTML = keys.map((key) => {
+      const doneCount = dailyCompletedCount(key);
+      const totalTasks = availableHabitCountOnDate(key);
+      const isDisciplineDay = doneCount > 0;
+      const note = state.days[key]?.note?.trim();
       return `<div class="history-row">
         <div class="left">
-          <span class="history-status ${day.completed ? 'done' : ''}">${day.completed ? '✓' : '·'}</span>
-          <div><strong>${formatDate(key)}</strong><small>${day.completed ? '成功打卡' : '尚未完成'}</small></div>
+          <span class="history-status ${isDisciplineDay ? 'done' : ''}">${isDisciplineDay ? '✓' : '·'}</span>
+          <div><strong>${formatDate(key)}</strong><small>${note ? escapeHtml(note) : (isDisciplineDay ? '今日有完成任務' : '沒有完成紀錄')}</small></div>
         </div>
-        <span class="history-score">${score}/${HABITS.length}</span>
+        <span class="history-score">${doneCount}/${totalTasks}<small>+${(ledger[key] || 0).toLocaleString()} EXP</small></span>
       </div>`;
-    }).join('') : '<p class="section-description">還沒有紀錄。從今天開始。</p>';
+    }).join('');
   }
 
   function renderRewards() {
-    const total = completedDaysCount();
-    const unlocked = REWARDS.filter(r => total >= r.day).length;
-    $('#rewardCountBadge').textContent = `${unlocked} / ${REWARDS.length}`;
-    $('#rewardGrid').innerHTML = REWARDS.map(reward => {
-      const isUnlocked = total >= reward.day;
-      return `<article class="reward-card ${isUnlocked ? 'unlocked' : ''} ${reward.day === 66 ? 'final' : ''}">
-        <span class="reward-day">DAY ${reward.day}</span>
+    const level = levelFromExp(totalExp()).level;
+    const unlocked = TITLES.filter((title) => level >= title.level).length;
+    $('#rewardCountBadge').textContent = `${unlocked} / ${TITLES.length}`;
+
+    $('#rewardGrid').innerHTML = TITLES.map((title) => {
+      const isUnlocked = level >= title.level;
+      const isCurrent = titleForLevel(level).level === title.level;
+      return `<article class="reward-card ${isUnlocked ? 'unlocked' : ''} ${isCurrent ? 'current-rank' : ''}">
+        <span class="reward-day">LV.${title.level}</span>
         ${isUnlocked ? '' : '<span class="reward-lock">⌁</span>'}
-        <span class="reward-emoji">${isUnlocked ? reward.emoji : '🎁'}</span>
-        <h3>${isUnlocked ? reward.title : `完成 ${reward.day} 天解鎖`}</h3>
-        <p>${isUnlocked ? reward.copy : `還差 ${Math.max(0, reward.day - total)} 個成功打卡日。`}</p>
+        <span class="reward-emoji">${isUnlocked ? title.icon : '◇'}</span>
+        <h3>${isUnlocked ? title.title : `Lv.${title.level} 解放`}</h3>
+        <p>${isUnlocked ? title.copy : `還需要 ${Math.max(0, title.level - level)} 個等級。`}</p>
       </article>`;
     }).join('');
   }
@@ -285,7 +424,7 @@
     toast.textContent = message;
     toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
   }
 
   function launchConfetti() {
@@ -306,102 +445,172 @@
     setTimeout(() => { host.innerHTML = ''; }, 3500);
   }
 
-  function maybeShowNewReward(previousTotal, newTotal) {
-    const reward = REWARDS.find(r => r.day > previousTotal && r.day <= newTotal && !state.seenRewards.includes(r.day));
-    if (!reward) return;
-    state.seenRewards.push(reward.day);
-    saveState();
-    $('#giftBurst').textContent = reward.emoji;
-    $('#rewardModalTitle').textContent = `第 ${reward.day} 天 · ${reward.title}`;
-    $('#rewardModalCopy').textContent = reward.copy;
+  function showTitleUnlock(title) {
+    $('#giftBurst').textContent = title.icon;
+    $('#rewardModalTitle').textContent = `Lv.${title.level} · ${title.title}`;
+    $('#rewardModalCopy').textContent = title.copy;
     $('#rewardModal').hidden = false;
     launchConfetti();
   }
 
+  function maybeShowLevelChange(beforeExp, afterExp) {
+    const before = levelFromExp(beforeExp);
+    const after = levelFromExp(afterExp);
+    if (after.level <= before.level) return false;
+
+    const newlyUnlocked = TITLES.filter((title) => title.level > before.level && title.level <= after.level).pop();
+    if (newlyUnlocked) {
+      showTitleUnlock(newlyUnlocked);
+      return true;
+    }
+
+    launchConfetti();
+    showToast(`LEVEL UP！Lv.${after.level}`);
+    return true;
+  }
+
   function setPage(target) {
-    activePage = target;
-    $$('.page').forEach(page => page.classList.toggle('active', page.dataset.page === target));
-    $$('.nav-item').forEach(button => {
+    $$('.page').forEach((page) => page.classList.toggle('active', page.dataset.page === target));
+    $$('.nav-item').forEach((button) => {
       const active = button.dataset.target === target;
       button.classList.toggle('active', active);
-      active ? button.setAttribute('aria-current','page') : button.removeAttribute('aria-current');
+      active ? button.setAttribute('aria-current', 'page') : button.removeAttribute('aria-current');
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  function toggleHabit(habitId) {
+    const habit = getHabitMap().get(habitId);
+    if (!habit || !habit.active) return;
+
+    const day = ensureDay();
+    const wasDone = !!day.habits[habitId];
+    const beforeExp = totalExp();
+    const beforeStats = getHabitStats(habitId);
+    day.habits[habitId] = !wasDone;
+    saveState();
+    const afterExp = totalExp();
+    const afterStats = getHabitStats(habitId);
+    renderAll();
+
+    if (!wasDone) {
+      const gained = Math.max(0, afterExp - beforeExp);
+      const bonus = STREAK_BONUSES.get(afterStats.current) || 0;
+      if (!maybeShowLevelChange(beforeExp, afterExp)) {
+        showToast(bonus ? `+${gained} EXP · 🔥 ${afterStats.current} 天里程碑！` : `+${gained} EXP · ${habit.title}`);
+      }
+    } else {
+      const lost = Math.max(0, beforeExp - afterExp);
+      showToast(lost ? `已取消 · -${lost} EXP` : '已取消今天的完成');
+    }
+
+    if (navigator.vibrate) navigator.vibrate(18);
+  }
+
   $('#habitList').addEventListener('click', (event) => {
+    const deleteButton = event.target.closest('[data-delete-habit]');
+    if (deleteButton) {
+      event.stopPropagation();
+      const habitId = deleteButton.dataset.deleteHabit;
+      const habit = state.customHabits.find((item) => item.id === habitId);
+      if (!habit) return;
+      const ok = confirm(`要移除「${habit.title}」嗎？\n\n過去完成紀錄與已取得的 EXP 會保留，只是不再出現在每天任務中。`);
+      if (!ok) return;
+      habit.active = false;
+      habit.archivedAt = localDateKey();
+      renderAll();
+      showToast('任務已封存，歷史紀錄保留');
+      return;
+    }
+
     const row = event.target.closest('[data-habit]');
     if (!row) return;
-    const day = ensureDay();
-    if (day.completed) return;
-    const id = row.dataset.habit;
-    day.habits[id] = !day.habits[id];
-    renderToday();
-    saveState();
-    if (navigator.vibrate) navigator.vibrate(18);
+    toggleHabit(row.dataset.habit);
+  });
+
+  $('#habitList').addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (event.target.closest('[data-delete-habit]')) return;
+    const row = event.target.closest('[data-habit]');
+    if (!row) return;
+    event.preventDefault();
+    toggleHabit(row.dataset.habit);
   });
 
   $('#dailyNote').addEventListener('input', (event) => {
     const day = ensureDay();
-    if (day.completed) return;
     day.note = event.target.value;
     $('#noteCounter').textContent = `${day.note.length} / 240`;
     $('#noteSaved').textContent = '已儲存';
     saveState();
   });
 
-  $('#completeDayButton').addEventListener('click', () => {
-    const key = localDateKey();
-    const day = ensureDay(key);
-    if (day.completed) {
-      const ok = confirm('要重新編輯今天嗎？重新編輯後，今天會先取消成功打卡，直到你再次完成 11 項。');
-      if (!ok) return;
-      day.completed = false;
-      day.completedAt = null;
-      renderAll();
-      showToast('今天已重新開放編輯');
-      return;
-    }
-
-    const count = currentHabitCount();
-    if (count !== HABITS.length) return;
-    const previousTotal = completedDaysCount();
-    day.completed = true;
-    day.completedAt = new Date().toISOString();
-    saveState();
-    const newTotal = completedDaysCount();
-    renderAll();
-    launchConfetti();
-    showToast(`第 ${newTotal} 個成功日完成 ✓`);
-    maybeShowNewReward(previousTotal, newTotal);
+  $('#addTaskButton').addEventListener('click', () => {
+    $('#taskForm').reset();
+    $('#taskIconInput').value = '⚔️';
+    $('#taskDifficultyInput').value = '2';
+    $('#taskModal').hidden = false;
+    setTimeout(() => $('#taskTitleInput').focus(), 50);
   });
 
-  $$('.nav-item').forEach(button => button.addEventListener('click', () => setPage(button.dataset.target)));
+  $$('[data-close-task]').forEach((button) => button.addEventListener('click', () => { $('#taskModal').hidden = true; }));
+  $('#taskModal').addEventListener('click', (event) => { if (event.target === $('#taskModal')) $('#taskModal').hidden = true; });
 
-  $$('[data-close-modal]').forEach(button => button.addEventListener('click', () => { $('#rewardModal').hidden = true; }));
+  $('#taskForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const title = $('#taskTitleInput').value.trim();
+    if (!title) return;
+    const detail = $('#taskDetailInput').value.trim();
+    const icon = $('#taskIconInput').value.trim() || '⚔️';
+    const difficulty = Math.min(5, Math.max(1, Number($('#taskDifficultyInput').value) || 2));
+
+    state.customHabits.push({
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      icon,
+      title,
+      detail,
+      difficulty,
+      exp: difficulty * 10,
+      createdAt: localDateKey(),
+      archivedAt: null,
+      active: true,
+      custom: true,
+    });
+
+    saveState();
+    $('#taskModal').hidden = true;
+    renderAll();
+    showToast(`新任務已建立 · +${difficulty * 10} EXP/天`);
+  });
+
+  $$('.nav-item').forEach((button) => button.addEventListener('click', () => setPage(button.dataset.target)));
+
+  $$('[data-close-modal]').forEach((button) => button.addEventListener('click', () => { $('#rewardModal').hidden = true; }));
   $('#rewardModal').addEventListener('click', (event) => { if (event.target === $('#rewardModal')) $('#rewardModal').hidden = true; });
 
   $('#settingsButton').addEventListener('click', () => {
     $('#startDateInput').value = state.startDate;
     $('#settingsModal').hidden = false;
   });
-  $$('[data-close-settings]').forEach(button => button.addEventListener('click', () => { $('#settingsModal').hidden = true; }));
+  $$('[data-close-settings]').forEach((button) => button.addEventListener('click', () => { $('#settingsModal').hidden = true; }));
   $('#settingsModal').addEventListener('click', (event) => { if (event.target === $('#settingsModal')) $('#settingsModal').hidden = true; });
 
   $('#startDateInput').addEventListener('change', (event) => {
     if (!event.target.value) return;
+    const oldStart = state.startDate;
     state.startDate = event.target.value;
-    renderAll();
-    showToast('開始日已更新');
+    // Built-in habits follow the journey start. Custom task creation dates remain unchanged.
+    if (oldStart !== state.startDate) renderAll();
+    showToast('開始使用日已更新');
   });
 
   $('#exportButton').addEventListener('click', () => {
-    const payload = JSON.stringify({ app: '66 DAYS', exportedAt: new Date().toISOString(), data: state }, null, 2);
+    const payload = JSON.stringify({ app: '66 自律', version: APP_VERSION, exportedAt: new Date().toISOString(), data: state }, null, 2);
     const blob = new Blob([payload], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `66days-backup-${localDateKey()}.json`;
+    a.download = `66-self-discipline-backup-${localDateKey()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('備份已匯出');
@@ -414,20 +623,20 @@
       const parsed = JSON.parse(await file.text());
       const imported = parsed.data || parsed;
       if (!imported.startDate || typeof imported.days !== 'object') throw new Error('invalid');
-      state = { ...defaultState(), ...imported };
+      state = migrateState(imported);
       saveState();
       renderAll();
       $('#settingsModal').hidden = true;
       showToast('備份已匯入');
     } catch {
-      alert('這個檔案不是有效的 66 DAYS 備份。');
+      alert('這個檔案不是有效的 66 自律備份。');
     } finally {
       event.target.value = '';
     }
   });
 
   $('#resetButton').addEventListener('click', () => {
-    const ok = confirm('確定要清除全部打卡紀錄嗎？這個動作無法復原。');
+    const ok = confirm('確定要清除全部任務、EXP 與打卡紀錄嗎？這個動作無法復原。');
     if (!ok) return;
     state = defaultState();
     saveState();

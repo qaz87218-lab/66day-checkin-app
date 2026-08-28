@@ -4,16 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#c7331f" />
-  <meta name="description" content="把升等搬到現實：66 天習慣打卡挑戰" />
+  <meta name="description" content="66 自律：把升等搬到現實的長期自律養成 App" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="66 DAYS" />
+  <meta name="apple-mobile-web-app-title" content="66 自律" />
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="64x64" href="./icons/icon-64.png" />
   <link rel="stylesheet" href="./styles.css" />
-  <title>66 DAYS</title>
+  <title>66 自律</title>
 </head>
 <body>
   <div class="app-shell">
@@ -23,26 +24,27 @@
       <div class="hero-topline">
         <div>
           <p class="eyebrow">REAL LIFE LEVEL UP</p>
-          <h1>66 DAYS</h1>
+          <h1>66 自律</h1>
         </div>
         <button class="icon-button" id="settingsButton" aria-label="設定">⚙︎</button>
       </div>
-      <p class="hero-copy">把升等搬到現實。</p>
+      <p class="hero-copy">66 天不是終點，只是第一個里程碑。</p>
 
-      <section class="progress-card" aria-label="66天挑戰進度">
+      <section class="progress-card" aria-label="角色成長進度">
         <div class="progress-ring" id="progressRing">
           <div class="progress-ring-inner">
-            <strong id="completedDays">0</strong>
-            <span>/ 66</span>
+            <span>LV.</span>
+            <strong id="levelNumber">1</strong>
           </div>
         </div>
         <div class="progress-copy">
-          <span class="status-pill" id="challengeStatus">挑戰開始</span>
-          <h2 id="progressHeadline">第 1 天</h2>
-          <p id="nextGiftText">再完成 5 天解鎖第一個禮物</p>
+          <span class="status-pill" id="currentTitle">無名之人</span>
+          <h2 id="progressHeadline">距離 Lv.2</h2>
+          <p id="levelProgressText">0 / 100 EXP</p>
+          <div class="xp-bar" aria-hidden="true"><i id="xpBarFill"></i></div>
           <div class="mini-stats">
-            <div><strong id="streakCount">0</strong><span>連續天數</span></div>
-            <div><strong id="perfectRate">0%</strong><span>完成率</span></div>
+            <div><strong id="disciplineDays">0</strong><span>自律天數</span></div>
+            <div><strong id="totalExp">0</strong><span>總 EXP</span></div>
           </div>
         </div>
       </section>
@@ -53,45 +55,54 @@
         <div class="section-heading">
           <div>
             <p class="date-label" id="todayDate"></p>
-            <h2>今天的打卡</h2>
+            <h2>今天的任務</h2>
           </div>
           <span class="count-badge" id="todayCount">0 / 11</span>
         </div>
 
         <div class="daily-message" id="dailyMessage">
-          <span>今天只需要把今天做好。</span>
+          <span>每完成一項，就算今天向前一步。</span>
+        </div>
+
+        <div class="today-xp-card">
+          <span>今日獲得</span>
+          <strong id="todayXp">+0 EXP</strong>
+          <small>每個任務獨立累積，不必全部完成。</small>
         </div>
 
         <div class="habit-list" id="habitList"></div>
+
+        <button class="add-task-button" id="addTaskButton">
+          <span class="add-task-plus">＋</span>
+          <span><strong>新增自律任務</strong><small>自訂難度與 EXP</small></span>
+        </button>
 
         <div class="note-card">
           <label for="dailyNote">今天的一句話 <span>選填</span></label>
           <textarea id="dailyNote" rows="3" maxlength="240" placeholder="記下今天的感受、值得感激的事，或想留給明天的話…"></textarea>
           <div class="note-footer"><span id="noteSaved">自動儲存</span><span id="noteCounter">0 / 240</span></div>
         </div>
-
-        <button class="complete-button" id="completeDayButton" disabled>
-          <span id="completeButtonText">完成 11 項即可打卡</span>
-          <span aria-hidden="true">→</span>
-        </button>
       </section>
 
       <section class="page" id="historyPage" data-page="history">
         <div class="section-heading">
           <div>
             <p class="date-label">YOUR JOURNEY</p>
-            <h2>66 天紀錄</h2>
+            <h2>自律紀錄</h2>
           </div>
           <span class="count-badge" id="historyDoneBadge">0 天</span>
         </div>
-        <p class="section-description">成功打卡會變成實心圓。沒有完成的日子不會抹掉你的累積成果，連續天數則會重新計算。</p>
+        <p class="section-description">一天只要完成至少一項任務，就會計入自律天數。每項任務另外計算自己的累積、目前連續與最佳連續紀錄。</p>
         <div class="calendar-card">
+          <div class="calendar-card-head">
+            <strong>最近 70 天</strong>
+            <small>沒有 66 天上限</small>
+          </div>
           <div class="calendar-grid" id="challengeCalendar"></div>
           <div class="calendar-legend">
-            <span><i class="legend-dot done"></i>完成</span>
+            <span><i class="legend-dot done"></i>有完成任務</span>
             <span><i class="legend-dot today"></i>今天</span>
-            <span><i class="legend-dot missed"></i>未完成</span>
-            <span><i class="legend-dot future"></i>未來</span>
+            <span><i class="legend-dot missed"></i>無紀錄</span>
           </div>
         </div>
         <div class="history-list" id="historyList"></div>
@@ -100,12 +111,16 @@
       <section class="page" id="rewardsPage" data-page="rewards">
         <div class="section-heading">
           <div>
-            <p class="date-label">LEVEL UP REWARDS</p>
-            <h2>禮物箱</h2>
+            <p class="date-label">CLASS ADVANCEMENT</p>
+            <h2>稱號殿堂</h2>
           </div>
-          <span class="count-badge" id="rewardCountBadge">0 / 14</span>
+          <span class="count-badge" id="rewardCountBadge">1 / 11</span>
         </div>
-        <p class="section-description">每累積完成 5 天解鎖一份小禮物；第 66 天另有最終徽章。禮物是給自己的獎勵建議，不會要求花錢。</p>
+        <p class="section-description">等級越高，升級需求越高；從 Lv.100 起每級固定需要 2,080 EXP。到達指定等級會解放新的階級稱號。</p>
+        <div class="milestone-rule-card">
+          <strong>🔥 連續任務里程碑</strong>
+          <p>同一任務連續 7 / 30 / 66 / 100 / 365 天時，額外獲得 30 / 100 / 200 / 300 / 1,000 EXP。</p>
+        </div>
         <div class="reward-grid" id="rewardGrid"></div>
       </section>
     </main>
@@ -113,19 +128,53 @@
     <nav class="bottom-nav" aria-label="主要導覽">
       <button class="nav-item active" data-target="today" aria-current="page"><span>✓</span><small>今天</small></button>
       <button class="nav-item" data-target="history"><span>▦</span><small>紀錄</small></button>
-      <button class="nav-item" data-target="rewards"><span>✦</span><small>禮物</small></button>
+      <button class="nav-item" data-target="rewards"><span>⚔</span><small>階級</small></button>
     </nav>
   </div>
 
   <div class="modal-backdrop" id="rewardModal" hidden>
     <div class="modal reward-modal" role="dialog" aria-modal="true" aria-labelledby="rewardModalTitle">
       <button class="modal-close" data-close-modal aria-label="關閉">×</button>
-      <div class="gift-burst" id="giftBurst">🎁</div>
-      <p class="eyebrow">MILESTONE UNLOCKED</p>
-      <h2 id="rewardModalTitle">禮物解鎖</h2>
+      <div class="gift-burst" id="giftBurst">⚔️</div>
+      <p class="eyebrow">CLASS ADVANCEMENT</p>
+      <h2 id="rewardModalTitle">新稱號解放</h2>
       <p class="reward-modal-copy" id="rewardModalCopy"></p>
-      <button class="primary-modal-button" data-close-modal>收下禮物</button>
+      <button class="primary-modal-button" data-close-modal>接受轉職</button>
     </div>
+  </div>
+
+  <div class="modal-backdrop" id="taskModal" hidden>
+    <form class="modal task-modal" id="taskForm">
+      <button class="modal-close" type="button" data-close-task aria-label="關閉">×</button>
+      <p class="eyebrow">NEW QUEST</p>
+      <h2>新增自律任務</h2>
+
+      <label class="field-label" for="taskTitleInput">任務名稱</label>
+      <input class="text-input" id="taskTitleInput" maxlength="36" required placeholder="例如：日文學習 30 分鐘" />
+
+      <label class="field-label" for="taskDetailInput">完成條件 <span>選填</span></label>
+      <input class="text-input" id="taskDetailInput" maxlength="60" placeholder="例如：完成一回單字＋文法" />
+
+      <div class="task-form-grid">
+        <div>
+          <label class="field-label" for="taskIconInput">圖示</label>
+          <input class="text-input icon-input" id="taskIconInput" maxlength="4" value="⚔️" />
+        </div>
+        <div>
+          <label class="field-label" for="taskDifficultyInput">難度</label>
+          <select class="text-input" id="taskDifficultyInput">
+            <option value="1">★ 簡單 · 10 EXP</option>
+            <option value="2" selected>★★ 普通 · 20 EXP</option>
+            <option value="3">★★★ 困難 · 30 EXP</option>
+            <option value="4">★★★★ 挑戰 · 40 EXP</option>
+            <option value="5">★★★★★ 極限 · 50 EXP</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="form-note">同一任務一天只能取得一次 EXP。自訂任務每日基礎 EXP 合計上限為 200；連續里程碑獎勵不受此上限影響。</p>
+      <button class="primary-modal-button" type="submit">建立任務</button>
+    </form>
   </div>
 
   <div class="modal-backdrop" id="settingsModal" hidden>
@@ -134,14 +183,14 @@
       <p class="eyebrow">SETTINGS</p>
       <h2 id="settingsModalTitle">設定與備份</h2>
       <div class="setting-row">
-        <div><strong>挑戰開始日</strong><small>第 1 天從這一天開始</small></div>
+        <div><strong>開始使用日</strong><small>用來計算你的自律旅程起點</small></div>
         <input type="date" id="startDateInput" />
       </div>
       <div class="settings-actions">
         <button id="exportButton">匯出備份</button>
         <label class="file-button">匯入備份<input type="file" id="importInput" accept="application/json" /></label>
       </div>
-      <p class="settings-note">目前資料儲存在這台裝置的瀏覽器。若清除 Safari 網站資料，紀錄可能會消失，建議偶爾匯出備份。</p>
+      <p class="settings-note">資料儲存在這台裝置的瀏覽器。更新到 V2 時會自動保留舊版打卡資料；若清除瀏覽器網站資料，紀錄仍可能消失，建議偶爾匯出備份。</p>
       <button class="danger-button" id="resetButton">清除全部紀錄</button>
     </div>
   </div>
