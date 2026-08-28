@@ -67,7 +67,7 @@
         <div class="today-xp-card">
           <span>今日獲得</span>
           <strong id="todayXp">+0 EXP</strong>
-          <small>每個任務獨立累積，不必全部完成。</small>
+          <small>完成後會鎖定；若誤點，可填理由撤回。</small>
         </div>
 
         <div class="habit-list" id="habitList"></div>
@@ -174,6 +174,19 @@
 
       <p class="form-note">同一任務一天只能取得一次 EXP。自訂任務每日基礎 EXP 合計上限為 200；連續里程碑獎勵不受此上限影響。</p>
       <button class="primary-modal-button" type="submit">建立任務</button>
+    </form>
+  </div>
+
+  <div class="modal-backdrop" id="undoModal" hidden>
+    <form class="modal undo-modal" id="undoForm">
+      <button class="modal-close" type="button" data-close-undo aria-label="關閉">×</button>
+      <p class="eyebrow">CORRECTION</p>
+      <h2>撤回完成紀錄</h2>
+      <p class="undo-copy">你要撤回「<strong id="undoTaskName"></strong>」的今日完成。為了避免手滑，請寫下取消理由。</p>
+      <label class="field-label" for="undoReasonInput">取消理由</label>
+      <textarea class="text-input undo-reason" id="undoReasonInput" minlength="2" maxlength="120" required placeholder="例如：剛剛誤點，任務其實還沒完成"></textarea>
+      <p class="form-note">撤回後，這次取得的 EXP 與今天的完成紀錄會一併取消；理由會保存在本機備份資料中。</p>
+      <button class="primary-modal-button" type="submit">確認撤回</button>
     </form>
   </div>
 

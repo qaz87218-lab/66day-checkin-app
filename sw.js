@@ -1,4 +1,4 @@
-const CACHE_NAME = '66days-v3-icon';
+const CACHE_NAME = '66days-v5-locked-tasks-final';
 const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icons/icon-32.png', './icons/icon-64.png', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', event => {

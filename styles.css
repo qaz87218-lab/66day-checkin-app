@@ -90,6 +90,8 @@ main { padding:22px 16px calc(104px + var(--safe-bottom)); }
 .habit-row:active { transform:scale(.988); }
 .habit-row:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
 .habit-row.done { border-color:rgba(110,231,168,.26); background:linear-gradient(145deg,rgba(30,62,46,.82),rgba(17,29,23,.9)); }
+.habit-row.locked { cursor:default; }
+.habit-row.locked:active { transform:none; }
 .habit-icon { width:44px; height:44px; flex:0 0 44px; border-radius:14px; display:grid; place-items:center; background:#241b17; font-size:21px; }
 .habit-row.done .habit-icon { background:rgba(110,231,168,.14); }
 .habit-copy { min-width:0; flex:1; padding-right:2px; }
@@ -105,6 +107,8 @@ main { padding:22px 16px calc(104px + var(--safe-bottom)); }
 .habit-delete { position:absolute; top:5px; right:5px; width:24px; height:24px; padding:0; border:0; border-radius:50%; background:transparent; color:#645954; font-size:17px; line-height:1; cursor:pointer; z-index:2; }
 .habit-delete:hover { background:rgba(255,255,255,.05); color:#b8aaa1; }
 .habit-row:has(.habit-delete) .habit-check { margin-right:7px; }
+.habit-undo { display:inline-flex; align-items:center; min-height:24px; margin-top:7px; padding:0 9px; border:1px solid rgba(255,213,106,.18); border-radius:999px; background:rgba(255,213,106,.06); color:#d8bc76; font-size:9px; font-weight:850; cursor:pointer; }
+.habit-undo:hover { background:rgba(255,213,106,.1); }
 
 .add-task-button { width:100%; min-height:62px; margin-top:11px; padding:10px 13px; display:flex; align-items:center; gap:12px; border:1px dashed rgba(255,213,106,.25); border-radius:18px; background:rgba(255,213,106,.035); text-align:left; cursor:pointer; }
 .add-task-plus { width:38px; height:38px; display:grid; place-items:center; flex:0 0 38px; border-radius:13px; background:rgba(255,213,106,.1); color:var(--gold); font-size:24px; }
@@ -175,7 +179,7 @@ main { padding:22px 16px calc(104px + var(--safe-bottom)); }
 .modal h2 { margin:6px 0 8px; font-size:25px; }
 .reward-modal-copy { margin:0 auto 20px; max-width:300px; color:#c5b5aa; line-height:1.65; }
 .primary-modal-button { width:100%; min-height:52px; border:0; border-radius:16px; background:linear-gradient(135deg,#f06428,#c9281b); font-weight:900; cursor:pointer; }
-.settings-modal h2,.task-modal h2 { margin:6px 0 22px; }
+.settings-modal h2,.task-modal h2,.undo-modal h2 { margin:6px 0 22px; }
 .setting-row { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:13px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .setting-row strong { display:block; font-size:13px; }
 .setting-row small { display:block; margin-top:3px; color:#7f736c; font-size:10px; }
@@ -192,7 +196,10 @@ main { padding:22px 16px calc(104px + var(--safe-bottom)); }
 .text-input:focus { border-color:rgba(255,213,106,.45); box-shadow:0 0 0 3px rgba(255,213,106,.05); }
 .icon-input { text-align:center; font-size:19px; }
 .task-form-grid { display:grid; grid-template-columns:90px 1fr; gap:10px; }
-.task-modal .form-note { margin:13px 0 16px; }
+.task-modal .form-note,.undo-modal .form-note { margin:13px 0 16px; }
+.undo-copy { margin:0 0 14px; color:#a9988f; font-size:12px; line-height:1.6; }
+.undo-copy strong { color:#f1dfd3; }
+.undo-reason { min-height:105px; padding:12px; resize:vertical; line-height:1.5; }
 
 .toast { position:fixed; z-index:80; left:50%; bottom:calc(88px + var(--safe-bottom)); transform:translate(-50%,18px); min-width:180px; max-width:calc(100% - 36px); padding:11px 15px; border-radius:999px; background:#f4e4d7; color:#211711; box-shadow:0 10px 35px rgba(0,0,0,.35); text-align:center; font-size:12px; font-weight:850; opacity:0; pointer-events:none; transition:.2s ease; }
 .toast.show { opacity:1; transform:translate(-50%,0); }

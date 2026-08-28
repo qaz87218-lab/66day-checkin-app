@@ -3,7 +3,7 @@
 
   // Keep the original storage key so existing users are migrated in place.
   const STORAGE_KEY = '66days-checkin-v1';
-  const APP_VERSION = 2;
+  const APP_VERSION = 4;
   const CUSTOM_DAILY_EXP_CAP = 200;
 
   const DEFAULT_HABITS = [
@@ -87,6 +87,7 @@
       startDate: localDateKey(),
       days: {},
       customHabits: [],
+      defaultHabitOverrides: {},
     };
   }
 
@@ -100,6 +101,7 @@
       version: APP_VERSION,
       days: rawState.days && typeof rawState.days === 'object' ? rawState.days : {},
       customHabits: Array.isArray(rawState.customHabits) ? rawState.customHabits : [],
+      defaultHabitOverrides: rawState.defaultHabitOverrides && typeof rawState.defaultHabitOverrides === 'object' ? rawState.defaultHabitOverrides : {},
     };
 
     Object.entries(migrated.days).forEach(([key, day]) => {
@@ -108,6 +110,7 @@
         ? migrated.days[key].habits
         : {};
       migrated.days[key].note = migrated.days[key].note || '';
+      migrated.days[key].corrections = Array.isArray(migrated.days[key].corrections) ? migrated.days[key].corrections : [];
       // Old v1 fields such as `completed` are intentionally left in place for backup compatibility,
       // but v2 no longer uses them to decide whether a day counts.
     });
@@ -142,15 +145,18 @@
   }
 
   function getAllHabits(includeArchived = true) {
-    const defaults = DEFAULT_HABITS.map((habit) => ({
-      ...habit,
-      createdAt: state.startDate,
-      archivedAt: null,
-      active: true,
-      custom: false,
-    }));
-    const custom = includeArchived ? state.customHabits : state.customHabits.filter((habit) => habit.active !== false);
-    return [...defaults, ...custom];
+    const defaults = DEFAULT_HABITS.map((habit) => {
+      const override = state.defaultHabitOverrides?.[habit.id] || {};
+      return {
+        ...habit,
+        createdAt: state.startDate,
+        archivedAt: override.archivedAt || null,
+        active: override.active !== false,
+        custom: false,
+      };
+    });
+    const all = [...defaults, ...state.customHabits];
+    return includeArchived ? all : all.filter((habit) => habit.active !== false);
   }
 
   function getActiveHabits() {
@@ -176,6 +182,7 @@
       if (!(habit.id in day.habits)) day.habits[habit.id] = false;
     });
     day.note = day.note || '';
+    day.corrections = Array.isArray(day.corrections) ? day.corrections : [];
     return day;
   }
 
@@ -297,7 +304,12 @@
   }
 
   function availableHabitCountOnDate(key) {
-    return getAllHabits(true).filter((habit) => habitAvailableOnDate(habit, key)).length;
+    return getAllHabits(true).filter((habit) => {
+      if (!habitAvailableOnDate(habit, key)) return false;
+      // If a task is removed today before it was completed, it should stop counting immediately.
+      if (habit.active === false && habit.archivedAt === key && !state.days[key]?.habits?.[habit.id]) return false;
+      return true;
+    }).length;
   }
 
   function renderHeader() {
@@ -341,15 +353,16 @@
       const stats = getHabitStats(habit.id);
       const stars = '★'.repeat(habit.difficulty);
       return `
-        <div class="habit-row ${checked ? 'done' : ''}" data-habit="${escapeHtml(habit.id)}" role="button" tabindex="0" aria-pressed="${checked}">
+        <div class="habit-row ${checked ? 'done locked' : ''}" data-habit="${escapeHtml(habit.id)}" role="button" tabindex="0" aria-pressed="${checked}">
           <span class="habit-icon">${escapeHtml(habit.icon)}</span>
           <span class="habit-copy">
             <span class="habit-title-line"><strong>${escapeHtml(habit.title)}</strong><em>+${habit.exp} EXP</em></span>
             <small>${escapeHtml(habit.detail || `${stars} 難度`)}</small>
             <span class="habit-stats"><b>累積 ${stats.total}</b><b>🔥 ${stats.current}</b><b>最佳 ${stats.best}</b></span>
+            ${checked ? `<button class="habit-undo" type="button" data-undo-habit="${escapeHtml(habit.id)}">誤點？撤回</button>` : ''}
           </span>
-          ${habit.custom ? `<button class="habit-delete" type="button" data-delete-habit="${escapeHtml(habit.id)}" aria-label="刪除 ${escapeHtml(habit.title)}">×</button>` : ''}
-          <span class="habit-check" aria-label="${checked ? '已完成' : '未完成'}">${checked ? '✓' : ''}</span>
+          <button class="habit-delete" type="button" data-delete-habit="${escapeHtml(habit.id)}" aria-label="刪除 ${escapeHtml(habit.title)}">×</button>
+          <span class="habit-check" aria-label="${checked ? '已完成並鎖定' : '未完成'}">${checked ? '✓' : ''}</span>
         </div>`;
     }).join('');
 
@@ -479,62 +492,137 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function toggleHabit(habitId) {
+  function completeHabit(habitId) {
     const habit = getHabitMap().get(habitId);
     if (!habit || !habit.active) return;
 
     const day = ensureDay();
     const wasDone = !!day.habits[habitId];
+    if (wasDone) {
+      showToast('這項任務已完成並鎖定；若真的點錯，請使用「誤點？撤回」');
+      return;
+    }
+
     const beforeExp = totalExp();
-    const beforeStats = getHabitStats(habitId);
-    day.habits[habitId] = !wasDone;
+    day.habits[habitId] = true;
     saveState();
     const afterExp = totalExp();
     const afterStats = getHabitStats(habitId);
     renderAll();
 
-    if (!wasDone) {
-      const gained = Math.max(0, afterExp - beforeExp);
-      const bonus = STREAK_BONUSES.get(afterStats.current) || 0;
-      if (!maybeShowLevelChange(beforeExp, afterExp)) {
-        showToast(bonus ? `+${gained} EXP · 🔥 ${afterStats.current} 天里程碑！` : `+${gained} EXP · ${habit.title}`);
-      }
-    } else {
-      const lost = Math.max(0, beforeExp - afterExp);
-      showToast(lost ? `已取消 · -${lost} EXP` : '已取消今天的完成');
+    const gained = Math.max(0, afterExp - beforeExp);
+    const bonus = STREAK_BONUSES.get(afterStats.current) || 0;
+    if (!maybeShowLevelChange(beforeExp, afterExp)) {
+      showToast(bonus ? `+${gained} EXP · 🔥 ${afterStats.current} 天里程碑！` : `+${gained} EXP · ${habit.title}`);
     }
 
     if (navigator.vibrate) navigator.vibrate(18);
+  }
+
+  function archiveHabit(habitId) {
+    const habit = getHabitMap().get(habitId);
+    if (!habit || habit.active === false) return;
+    const today = localDateKey();
+    const ok = confirm(`要刪除「${habit.title}」嗎？\n\n它會立刻從每日任務中消失，但過去的完成紀錄、累積天數與已取得 EXP 都會保留。`);
+    if (!ok) return;
+
+    if (habit.custom) {
+      const target = state.customHabits.find((item) => item.id === habitId);
+      if (!target) return;
+      target.active = false;
+      target.archivedAt = today;
+    } else {
+      state.defaultHabitOverrides[habitId] = { active: false, archivedAt: today };
+    }
+
+    saveState();
+    renderAll();
+    showToast('任務已刪除，歷史紀錄保留');
+  }
+
+  let pendingUndoHabitId = null;
+
+  function openUndoModal(habitId) {
+    const habit = getHabitMap().get(habitId);
+    const day = ensureDay();
+    if (!habit || !day.habits[habitId]) return;
+    pendingUndoHabitId = habitId;
+    $('#undoTaskName').textContent = habit.title;
+    $('#undoReasonInput').value = '';
+    $('#undoModal').hidden = false;
+    setTimeout(() => $('#undoReasonInput').focus(), 50);
+  }
+
+  function closeUndoModal() {
+    pendingUndoHabitId = null;
+    $('#undoModal').hidden = true;
+    $('#undoReasonInput').value = '';
   }
 
   $('#habitList').addEventListener('click', (event) => {
     const deleteButton = event.target.closest('[data-delete-habit]');
     if (deleteButton) {
       event.stopPropagation();
-      const habitId = deleteButton.dataset.deleteHabit;
-      const habit = state.customHabits.find((item) => item.id === habitId);
-      if (!habit) return;
-      const ok = confirm(`要移除「${habit.title}」嗎？\n\n過去完成紀錄與已取得的 EXP 會保留，只是不再出現在每天任務中。`);
-      if (!ok) return;
-      habit.active = false;
-      habit.archivedAt = localDateKey();
-      renderAll();
-      showToast('任務已封存，歷史紀錄保留');
+      archiveHabit(deleteButton.dataset.deleteHabit);
+      return;
+    }
+
+    const undoButton = event.target.closest('[data-undo-habit]');
+    if (undoButton) {
+      event.stopPropagation();
+      openUndoModal(undoButton.dataset.undoHabit);
       return;
     }
 
     const row = event.target.closest('[data-habit]');
     if (!row) return;
-    toggleHabit(row.dataset.habit);
+    completeHabit(row.dataset.habit);
   });
 
   $('#habitList').addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
-    if (event.target.closest('[data-delete-habit]')) return;
+    if (event.target.closest('[data-delete-habit], [data-undo-habit]')) return;
     const row = event.target.closest('[data-habit]');
     if (!row) return;
     event.preventDefault();
-    toggleHabit(row.dataset.habit);
+    completeHabit(row.dataset.habit);
+  });
+
+  $$('[data-close-undo]').forEach((button) => button.addEventListener('click', closeUndoModal));
+  $('#undoModal').addEventListener('click', (event) => { if (event.target === $('#undoModal')) closeUndoModal(); });
+
+  $('#undoForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!pendingUndoHabitId) return;
+    const reason = $('#undoReasonInput').value.trim();
+    if (reason.length < 2) {
+      $('#undoReasonInput').setCustomValidity('請寫下取消理由');
+      $('#undoReasonInput').reportValidity();
+      return;
+    }
+    $('#undoReasonInput').setCustomValidity('');
+
+    const habitId = pendingUndoHabitId;
+    const habit = getHabitMap().get(habitId);
+    const day = ensureDay();
+    if (!habit || !day.habits[habitId]) {
+      closeUndoModal();
+      return;
+    }
+
+    const beforeExp = totalExp();
+    day.habits[habitId] = false;
+    day.corrections.push({
+      habitId,
+      reason,
+      cancelledAt: new Date().toISOString(),
+    });
+    saveState();
+    const afterExp = totalExp();
+    const lost = Math.max(0, beforeExp - afterExp);
+    closeUndoModal();
+    renderAll();
+    showToast(lost ? `已撤回完成 · -${lost} EXP` : '已撤回今天的完成紀錄');
   });
 
   $('#dailyNote').addEventListener('input', (event) => {
@@ -645,6 +733,23 @@
     setPage('today');
     showToast('全部紀錄已清除');
   });
+
+  let renderedDateKey = localDateKey();
+
+  function handleDateRollover() {
+    const nowKey = localDateKey();
+    if (nowKey === renderedDateKey) return;
+    renderedDateKey = nowKey;
+    ensureDay(nowKey);
+    renderAll();
+    setPage('today');
+    showToast('新的一天開始了，今日任務已更新');
+  }
+
+  // Keep an installed PWA correct even if it stays open across midnight.
+  setInterval(handleDateRollover, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) handleDateRollover(); });
+  window.addEventListener('focus', handleDateRollover);
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
